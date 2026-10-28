@@ -927,6 +927,13 @@ class PI05Pytorch(nn.Module):
         safetensors_file = path / "model.safetensors" if path.is_dir() else path
         load_kwargs = {"device": str(device)} if device is not None else {}
         original_state_dict = load_file(str(safetensors_file), **load_kwargs)
+        # A checkpoint LoongForge saved from PI05Policy holds every tensor twice: under ``model.`` and under its
+        # ``pi05.`` alias. Keep the ``model.`` copy without the prefix, so a new run can start from an earlier run's
+        # checkpoint (``--resume`` continues the same run instead).
+        if any(k.startswith("pi05.") for k in original_state_dict):
+            original_state_dict = {
+                k[len("model."):]: v for k, v in original_state_dict.items() if k.startswith("model.")
+            }
 
         _PREFIXES = ("model.architecture.pi05_model.", "architecture.pi05_model.")
         fixed = {}
