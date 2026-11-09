@@ -9,6 +9,10 @@ model:
   action_horizon: 50
   max_action_dim: 32
   max_state_dim: 32
+  # >0: first N action dims become a[t+k] - s[t] (delta joints, grippers absolute);
+  # requires `relative_action` stats in meta/stats.json, see
+  # tools/embodied/compute_relative_action_stats.py
+  relative_action_dims: 0
 
   # Training
   gradient_checkpointing: false

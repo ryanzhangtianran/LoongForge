@@ -60,6 +60,13 @@ class Pi05ModelConfig:
     action_horizon: int = 50
     max_action_dim: int = 32
     max_state_dim: int = 32
+    # >0: the first N action dims are trained as a[t+k] - s[t] (openpi DeltaActions);
+    # trailing dims (grippers) stay absolute. Needs ``relative_action`` stats in
+    # meta/stats.json (tools/embodied/compute_relative_action_stats.py). 0 = absolute.
+    relative_action_dims: int = 0
+
+    # Flow-matching Euler steps at inference (was only an internal default, so a serve config value was dropped).
+    num_inference_steps: int = 10
 
     # Training-time model switches
     freeze_vision_encoder: bool = False

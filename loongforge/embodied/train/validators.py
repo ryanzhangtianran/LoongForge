@@ -103,6 +103,8 @@ def validate(training_args, model_cfg, data_cfg):
     # ── Steps ──
     if training_args.train_iters <= 0:
         raise ValueError(f"--train-iters must be positive, got {training_args.train_iters}")
+    if training_args.save_start_iter < 0:
+        raise ValueError(f"--save-start-iter must be >= 0, got {training_args.save_start_iter}")
     if training_args.save_interval < 0:
         raise ValueError(
             f"--save-interval must be >= 0, got {training_args.save_interval}"

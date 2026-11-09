@@ -225,6 +225,41 @@ class Pi05TokenizeTransform(BaseTransform):
         return data
 
 
+class RelativeActionTransform(BaseTransform):
+    """Make the first ``dims`` action dims relative to the current state: a[t+k] - s[t].
+
+    Mirrors openpi's ``DeltaActions``: arm joints become displacements from the
+    observed state, trailing dims (grippers) stay absolute. Runs on the raw action
+    chunk before normalization; ``unapply`` adds the state back.
+    """
+
+    def __init__(
+        self,
+        dims: int,
+        action_key: str = "action",
+        state_key: str = "observation.state",
+        training: bool = True,
+    ):
+        super().__init__(apply_to=[action_key], training=training)
+        self.dims = dims
+        self.state_key = state_key
+
+    def _state(self, data: Dict[str, Any]) -> torch.Tensor:
+        return torch.as_tensor(data[self.state_key], dtype=torch.float32).flatten()[: self.dims]
+
+    def apply(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        action = torch.as_tensor(data[self.apply_to[0]], dtype=torch.float32).clone()
+        action[..., : self.dims] -= self._state(data)
+        data[self.apply_to[0]] = action
+        return data
+
+    def unapply(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        action = torch.as_tensor(data[self.apply_to[0]], dtype=torch.float32).clone()
+        action[..., : self.dims] += self._state(data)
+        data[self.apply_to[0]] = action
+        return data
+
+
 @register_transform_builder("pi05")
 def build_pi05_transforms(ctx: TransformBuilderContext):
     """Build Pi05-specific per-sample transforms."""
@@ -241,15 +276,35 @@ def build_pi05_transforms(ctx: TransformBuilderContext):
     if image_transform is not None:
         transforms.append(image_transform)
 
+    dataset_stats = ctx.dataset_stats
+
+    # Two independent action-space rewrites, both of which MUST precede
+    # ActionTransform so normalization stats apply to the rewritten target.
+    # They are mutually exclusive: each consumes the raw env-space action.
+    if data_cfg.use_aloha_pi_delta_actions and model_cfg.relative_action_dims:
+        raise ValueError(
+            "data.use_aloha_pi_delta_actions and model.relative_action_dims are mutually "
+            "exclusive; both rewrite the action target and would compose incorrectly."
+        )
+
     # RoboTwin pi0.5: env-space absolute joints -> pi-space delta (inverse of the
-    # eval decoder pi05_aloha_robotwin). MUST precede ActionTransform so the
-    # normalization stats apply to the delta target. See aloha_pi_delta.py.
+    # eval decoder pi05_aloha_robotwin). See aloha_pi_delta.py.
     if data_cfg.use_aloha_pi_delta_actions:
         transforms.append(AlohaPiDeltaActionTransform())
 
+    if model_cfg.relative_action_dims:
+        transforms.append(RelativeActionTransform(dims=model_cfg.relative_action_dims))
+        if not dataset_stats or "relative_action" not in dataset_stats:
+            raise ValueError(
+                "model.relative_action_dims > 0 needs 'relative_action' stats in meta/stats.json; "
+                "run tools/embodied/compute_relative_action_stats.py on the dataset first."
+            )
+        # ActionTransform normalizes with stats["action"]; deltas need their own quantiles.
+        dataset_stats = {**dataset_stats, "action": dataset_stats["relative_action"]}
+
     action_transform = build_action_transform(
         data_cfg,
-        ctx.dataset_stats,
+        dataset_stats,
         action_horizon,
         max_action_dim,
         normalization_mode,

@@ -249,6 +249,10 @@ class _BasicTrainingArgs:
         default=10000,
         metadata={"help": "Write a checkpoint every N iterations; 0 disables saving."},
     )
+    save_start_iter: int = field(
+        default=0,
+        metadata={"help": "Skip interval checkpoints before this iteration (the final save still happens)."},
+    )
     seed: int = field(
         default=3047,
         metadata={

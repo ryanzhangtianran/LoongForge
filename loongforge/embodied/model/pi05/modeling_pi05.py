@@ -911,6 +911,13 @@ class PI05Pytorch(nn.Module):
         safetensors_file = path / "model.safetensors" if path.is_dir() else path
         load_kwargs = {"device": str(device)} if device is not None else {}
         original_state_dict = load_file(str(safetensors_file), **load_kwargs)
+        # A checkpoint LoongForge saved from PI05Policy holds every tensor twice: under ``model.`` and under its
+        # ``pi05.`` alias. Keep the ``model.`` copy without the prefix, so a new run can start from an earlier run's
+        # checkpoint (``--resume`` continues the same run instead).
+        if any(k.startswith("pi05.") for k in original_state_dict):
+            original_state_dict = {
+                k[len("model."):]: v for k, v in original_state_dict.items() if k.startswith("model.")
+            }
 
         _PREFIXES = ("model.architecture.pi05_model.", "architecture.pi05_model.", "model.")
         fixed = {}
@@ -973,6 +980,7 @@ class PI05Policy(nn.Module):
             compile_scope=config.compile_scope,
             compile_fullgraph=config.compile_fullgraph,
             compile_dynamic=config.compile_dynamic,
+            num_inference_steps=config.num_inference_steps,
         )
         self.model = PI05Pytorch(pi05_cfg)
         if config.gradient_checkpointing:
@@ -1101,7 +1109,11 @@ class PI05Policy(nn.Module):
         masks = tok["attention_mask"].bool().to(device)
 
         actions = self.model.sample_actions(images_list, img_masks, tokens, masks)
-        action_stats = convert_stats(dataset_stats.get("action")) if dataset_stats else None
+        # Absolute actions normalize against stats["action"]; delta-trained models
+        # (relative_action_dims > 0) against stats["relative_action"].
+        rel_dims = self.config.relative_action_dims
+        stats_key = "relative_action" if rel_dims else "action"
+        action_stats = convert_stats(dataset_stats.get(stats_key)) if dataset_stats else None
         # Preserve stat-free inference when no action statistics are supplied.
         if action_stats is not None or normalization_mode in ("identity", "binary"):
             normalizer = Normalizer(mode=normalization_mode, statistics=action_stats or {})
@@ -1110,6 +1122,14 @@ class PI05Policy(nn.Module):
             dim = min(actions.shape[-1], normalizer.statistics[stat_key].numel()) if stat_key else self.config.action_dim
             actions = actions.clone()
             actions[..., :dim] = normalizer.inverse(actions[..., :dim]).to(actions.dtype)
+
+        # Delta-trained models predict a[t+k] - s[t] on the leading dims; add the
+        # current proprioceptive state back to recover absolute actions.
+        if rel_dims:
+            if state is None:
+                raise ValueError("relative_action_dims > 0 requires `state` to restore absolute actions")
+            actions = actions.clone()
+            actions[:, :, :rel_dims] += state.to(actions.device, actions.dtype)[:, None, :rel_dims]
         return actions.cpu().numpy()
 
     @staticmethod

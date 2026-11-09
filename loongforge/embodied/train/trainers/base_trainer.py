@@ -391,7 +391,11 @@ class BaseTrainer(ABC):
             maybe_finalize_pending_save(self.ctx, self.completed_steps)
 
             # ── Checkpoint ──
-            if save_interval and self.completed_steps % save_interval == 0:
+            if (
+                save_interval
+                and self.completed_steps % save_interval == 0
+                and self.completed_steps >= training_args.save_start_iter
+            ):
                 self._save_checkpoint()
 
         # Final cleanup if loop exited before profile_step_end was reached.
