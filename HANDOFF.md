@@ -79,9 +79,10 @@ bash examples/embodied/pi05/run_pi05_ddp_finetune.sh \
 
 - 动作空间两种都支持，训练和评测必须成对使用：
   - 绝对动作：`model.relative_action_dims=0`（默认），评测用 `tools/embodied/ersi_server_abs.yaml`。
-  - 差分动作：`model.relative_action_dims=14`，评测用 `tools/embodied/ersi_server.yaml`，
+  - 差分动作：`model.relative_action_dims=14`，评测用 `tools/embodied/ersi_server_rel.yaml`，
     数据集 `meta/stats.json` 必须含 `relative_action`。
-  - 配错会静默算错：用 `ersi_server.yaml` 服务一个绝对动作 ckpt，会把 state 多加一遍。
+  - **配错会静默算错**（用 `_rel` 服务绝对动作 ckpt 会把 state 多加一遍），所以
+    `ersi_server.sh` 的 `CONFIG` 没有默认值，必须显式二选一。
 
 - 选定配置：16x1 + TorchAO FP8 + TorchFusedAdamW（见 6b）。不开 FP8 时 batch 16 会 OOM，退回 12x1。
 - `--optimizer TorchFusedAdamW` 是 torch 自带的 fused AdamW，无 TE/apex 依赖；脚本里写死的 `--optimizer AdamW` 被末尾的 `"$@"` 覆盖。

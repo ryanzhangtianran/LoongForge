@@ -1,6 +1,7 @@
-# Absolute-action variant of ersi_server.yaml: pi05 with 16-dim joint actions, NO relative dims,
+# Absolute-action serving config: pi05 with 16-dim joint actions, NO relative dims,
 # 3 cameras (ERSI pick_biggest_block). Use this for checkpoints trained with
-# model.relative_action_dims=0; use ersi_server.yaml for delta-trained ones.
+# model.relative_action_dims=0; use ersi_server_rel.yaml for delta-trained ones.
+# The two must not be mixed up: a mismatch yields wrong actions with no error.
 #
 #   CONFIG=tools/embodied/ersi_server_abs.yaml tools/embodied/ersi_server.sh <ckpt_dir>
 #

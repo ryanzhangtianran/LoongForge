@@ -106,3 +106,6 @@ nsight_*/
 
 # Locally downloaded tokenizers / model weights
 /models/
+
+# Site-specific environment (real hosts, keys, cluster paths)
+/.env.ersi

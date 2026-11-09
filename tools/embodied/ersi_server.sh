@@ -6,16 +6,17 @@
 # localhost:PORT / HEALTH_PORT. Killing the session (or Ctrl-C inside it) stops both.
 #
 # Usage:
-#   ERSI_REMOTE=<user>@<sim-host> tools/embodied/ersi_server.sh <ckpt_dir>
-#                                                                 # steps_N dir with model.safetensors
-#   CONFIG=<yaml> ERSI_REMOTE=... tools/embodied/ersi_server.sh <ckpt_dir>
-#                                                                 # other model layout; default is
-#                                                                 # ersi_server.yaml (16-dim joint pi05,
-#                                                                 # delta actions). For an absolute-action
-#                                                                 # checkpoint use ersi_server_abs.yaml.
+#   CONFIG=<yaml> ERSI_REMOTE=<user>@<sim-host> tools/embodied/ersi_server.sh <ckpt_dir>
+#
+# <ckpt_dir> is a steps_N directory containing model.safetensors.
+# CONFIG has NO default: the action space must match how the checkpoint was trained, and a
+# mismatch produces wrong actions without any error. Pick one:
+#   ersi_server_abs.yaml   model.relative_action_dims=0   absolute-action checkpoints
+#   ersi_server_rel.yaml   model.relative_action_dims=14  delta-action checkpoints
 # Logs and the generated per-checkpoint yaml land in the run directory (<ckpt_dir>/../..).
 #
-# Environment:
+# Environment ($REPO/.env.ersi is sourced first if it exists, so these can live there):
+#   CONFIG                required, serving config (see above)
 #   ERSI_REMOTE           required, <user>@<host> of the sim box receiving the reverse tunnel
 #   ERSI_REMOTE_SSH_PORT  sshd port on the sim box (default 22)
 #   ERSI_SSH_KEY          private key for that host (default ~/.ssh/id_ed25519)
@@ -23,7 +24,14 @@
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$HERE/../.." && pwd)
-CONFIG=${CONFIG:-$HERE/ersi_server.yaml}
+# Site-specific values (host, key, paths) belong in this gitignored file, not in the repo.
+# Only the outer invocation sources it: the --inner run inside tmux receives every value
+# explicitly on its command line, and re-sourcing here would clobber the generated CONFIG.
+if [[ "${1:-}" != "--inner" && -f "$REPO/.env.ersi" ]]; then
+  # shellcheck source=/dev/null
+  . "$REPO/.env.ersi"
+fi
+CONFIG=${CONFIG:?set CONFIG=$HERE/ersi_server_abs.yaml (absolute actions) or $HERE/ersi_server_rel.yaml (delta actions) — it must match the checkpoint}
 SESSION=ersi_server
 PORT=12093          # must match server.port / server.health_port in CONFIG
 HEALTH_PORT=12094

@@ -1,0 +1,30 @@
+# Delta-action serving config: pi05 with 16-dim joint actions, 14 relative dims,
+# 3 cameras (ERSI pick_biggest_block). Use this for checkpoints trained with
+# model.relative_action_dims=14; use ersi_server_abs.yaml for absolute-action ones.
+# Serving an absolute-action checkpoint through this config silently adds the state back.
+# Requires `relative_action` stats in the dataset's meta/stats.json, and the client must send state.
+#
+#   CONFIG=tools/embodied/ersi_server_rel.yaml tools/embodied/ersi_server.sh <ckpt_dir>
+#
+# ckpt_path is overridden per launch; ports must match the script.
+model:
+  backend: loongforge
+  model_type: pi05
+  name: pi05-g2-pbb
+  action_dim: 16
+  state_dim: 16
+  action_horizon: 50
+  max_action_dim: 32
+  max_state_dim: 32
+  relative_action_dims: 14
+  compile_model: false
+
+server:
+  host: 0.0.0.0
+  port: 12093
+  health_port: 12094
+  ckpt_path: /path/to/steps_N
+  dataset_statistics_path: /workspace/datasets/ersi/02_pick_biggest_block/meta/stats.json
+  tokenizer_path: /workspace/models/paligemma-3b-pt-224
+  loongforge_root: /workspace/LoongForge
+  use_bf16: false
