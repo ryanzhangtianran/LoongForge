@@ -1,0 +1,66 @@
+{
+  "_comment": "ERSI task text normalization for merge_lerobot_v21.py: {dataset_dir_name: {original task: unified prompt}}. Unlisted tasks are kept verbatim.",
+  "01_pick_specific_obj": {
+    "pick_the_coke_cola": "Pick up the Coca-Cola on the table",
+    "pick_the_fanta": "Pick up the Fanta on the table",
+    "pick_the_grape_juice": "Pick up the grape juice on the table",
+    "pick_the_oolong_tea_beverage": "Pick up the oolong tea on the table",
+    "pick_the_sprite": "Pick up the Sprite on the table"
+  },
+  "02_pick_biggest_block": {
+    "Pick up the biggest building block on the table": "Pick up the biggest building block on the table"
+  },
+  "03_pick_pen_of_specific_color": {
+    "Pick up the blue pen on the table": "Pick up the blue pen on the table",
+    "Pick up the green pen on the table": "Pick up the green pen on the table",
+    "Pick up the purple pen on the table": "Pick up the purple pen on the table",
+    "Pick up the red pen on the table": "Pick up the red pen on the table",
+    "Pick up the yellow pen on the table": "Pick up the yellow pen on the table"
+  },
+  "04_pick_apple_into_box_color": {
+    "pick_the_apple_into_the_black_box": "Put the apple into the black box",
+    "pick_the_apple_into_the_blue_box": "Put the apple into the blue box",
+    "pick_the_apple_into_the_gray_box": "Put the apple into the gray box",
+    "pick_the_apple_into_the_green_box": "Put the apple into the green box",
+    "pick_the_apple_into_the_white_box": "Put the apple into the white box"
+  },
+  "05_place_mouse_on_pad": {
+    "place_mouse_on_pad": "Place the mouse on the mouse pad"
+  },
+  "06_align_mouse_on_pad": {
+    "Align the mouse straight on the mouse pad": "Align the mouse straight on the mouse pad"
+  },
+  "07_set_bottle_upright": {
+    "set the fanta upright and place it back in its original position": "Set the Fanta upright and place it back in its original position"
+  },
+  "08_insert_glue_penholder": {
+    "put the glue stick into the pen holder": "Put the glue stick into the pen holder"
+  },
+  "09_open_drawer": {
+    "Open the upper drawer of the nightstand.": "Open the upper drawer of the nightstand"
+  },
+  "10_sort_fruits": {
+    "Place the fruit with the smaller quantity into the left box with your left hand, and the fruit with the larger quantity into the right box with your right hand.": "Place the fruit with the smaller quantity into the left box with your left hand, and the fruit with the larger quantity into the right box with your right hand"
+  },
+  "11_arrange_blocks": {
+    "arrange the blocks in a row from smallest to largest, left to right": "Arrange the blocks in a row from smallest to largest, left to right"
+  },
+  "12_stack_bowls": {
+    "stack the bowls on both sides onto the center bowl": "Stack the bowls on both sides onto the center bowl"
+  },
+  "13_put_obj_into_drawer": {
+    "put_obj_into_drawer_g2": "Open the top drawer of the nightstand, put the building block into it, and close the drawer"
+  },
+  "14_take_obj_from_drawer": {
+    "take_obj_from_drawer": "Open the drawer, take out the block and place it on the table, then close the drawer"
+  },
+  "15_handover_apple": {
+    "Pick up the apple with the left hand and hand it over to the right hand": "Pick up the apple with the left hand and hand it over to the right hand"
+  },
+  "16_place_pot_stove": {
+    "lift the pot with both arms and place it on the kitchen stove": "Lift the pot with both arms and place it on the kitchen stove"
+  },
+  "17_unscrew_bottle_cap": {
+    "Hold the bottle with the left hand, unscrew the cap one full turn from above with the right hand in several steps, put the cap on the table to the right of the bottle, then reset both arms": "Hold the bottle with the left hand, unscrew the cap one full turn from above with the right hand in several steps, put the cap on the table to the right of the bottle, then reset both arms"
+  }
+}

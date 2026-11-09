@@ -1,0 +1,30 @@
+# Absolute-action variant of ersi_server.yaml: pi05 with 16-dim joint actions, NO relative dims,
+# 3 cameras (ERSI pick_biggest_block). Use this for checkpoints trained with
+# model.relative_action_dims=0; use ersi_server.yaml for delta-trained ones.
+#
+#   CONFIG=tools/embodied/ersi_server_abs.yaml tools/embodied/ersi_server.sh <ckpt_dir>
+#
+# ckpt_path is overridden per launch; ports must match the script.
+model:
+  backend: loongforge
+  model_type: pi05
+  name: pi05-g2-pbb-abs
+  action_dim: 16
+  state_dim: 16
+  action_horizon: 50
+  max_action_dim: 32
+  max_state_dim: 32
+  # 0 = absolute actions: predict_action un-normalizes with stats["action"]
+  # and does not add the current state back.
+  relative_action_dims: 0
+  compile_model: false
+
+server:
+  host: 0.0.0.0
+  port: 12093
+  health_port: 12094
+  ckpt_path: /path/to/steps_N
+  dataset_statistics_path: /workspace/datasets/ersi/02_pick_biggest_block/meta/stats.json
+  tokenizer_path: /workspace/models/paligemma-3b-pt-224
+  loongforge_root: /workspace/LoongForge
+  use_bf16: false

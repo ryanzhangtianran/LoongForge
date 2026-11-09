@@ -103,3 +103,6 @@ nsight_*/
 
 # Local AI coding assistant rules
 /.comate/
+
+# Locally downloaded tokenizers / model weights
+/models/
