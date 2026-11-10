@@ -718,6 +718,30 @@ def _fill_missing_optimizer_state(optim_state_dict: dict) -> tuple[dict, int]:
     return patched, len(missing)
 
 
+def _move_fused_step_to_param_device(optimizer) -> None:
+    """Put fused/capturable Adam ``step`` tensors back on their parameter's device.
+
+    ``ZeroRedundancyOptimizer.load_state_dict`` moves every 0-dim state tensor to
+    CPU, but fused AdamW requires ``step`` on the parameter's device.
+    """
+    children = list(getattr(optimizer, "_optimizers", None) or [])
+    for attr in ("optim", "_optimizer"):  # ZeRO local optim / fp32 master adapter
+        inner = getattr(optimizer, attr, None)
+        if inner is not None:
+            children.append(inner)
+    if children:
+        for child in children:
+            _move_fused_step_to_param_device(child)
+        return
+    for group in optimizer.param_groups:
+        if not (group.get("fused") or group.get("capturable")):
+            continue
+        for param in group["params"]:
+            step = optimizer.state.get(param, {}).get("step")
+            if torch.is_tensor(step) and step.device != param.device:
+                optimizer.state[param]["step"] = step.to(param.device)
+
+
 def _resume_legacy(model, optimizer, scheduler, checkpoint_path, ctx, restore_rng):
     """Legacy resume — load training_state.pt and dispatch optim state via FSDP API."""
     state_file = os.path.join(checkpoint_path, "training_state.pt")
@@ -759,6 +783,7 @@ def _resume_legacy(model, optimizer, scheduler, checkpoint_path, ctx, restore_rn
             )
     else:
         optimizer.load_state_dict(state["optimizer"])
+        _move_fused_step_to_param_device(optimizer)
     if ctx.is_main:
         logger.info("optimizer resumed successfully")
 
